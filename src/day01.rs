@@ -3,11 +3,11 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 
-fn load_lists(input_file_name: &str) -> (Vec<u64>, Vec<u64>) {
+fn load_lists(input_file_name: &str) -> (Vec<u32>, Vec<u32>) {
     static VALUES_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d+)\s*(\d+)").unwrap());
 
-    let mut first_list: Vec<u64> = Vec::new();
-    let mut second_list: Vec<u64> = Vec::new();
+    let mut first_list: Vec<u32> = Vec::new();
+    let mut second_list: Vec<u32> = Vec::new();
 
     if let Ok(lines) = helpers::read_lines(input_file_name) {
         for line in lines.flatten() {
@@ -32,7 +32,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_simple() {
+    fn part_one_simple() {
         let (mut first_list, mut second_list) = load_lists("./src/resources/day01_simple.txt");
         first_list.sort();
         second_list.sort();
@@ -44,7 +44,18 @@ mod tests {
     }
 
     #[test]
-    fn test() {
+    fn part_two_simple() {
+        let (first_list, second_list) = load_lists("./src/resources/day01_simple.txt");
+
+        let sum = first_list.iter().fold(0, |acc, number| {
+            let occurrences = second_list.iter().filter(|value| *value == number).count();
+            acc + (number * occurrences as u32)
+        });
+        assert_eq!(sum, 31);
+    }
+
+    #[test]
+    fn part_one() {
         let (mut first_list, mut second_list) = load_lists("./src/resources/day01_input.txt");
 
         first_list.sort();
@@ -55,6 +66,18 @@ mod tests {
         let sum = diffs.fold(0, |acc, diff| acc + diff);
         println!("{}", sum);
         assert_eq!(sum, 1223326);
+    }
+
+    #[test]
+    fn part_two() {
+        let (first_list, second_list) = load_lists("./src/resources/day01_input.txt");
+
+        let sum = first_list.iter().fold(0, |acc, number| {
+            let occurrences = second_list.iter().filter(|value| *value == number).count();
+            acc + (number * occurrences as u32)
+        });
+        println!("{}", sum);
+        // assert_eq!(sum, 31);
     }
 
 }
