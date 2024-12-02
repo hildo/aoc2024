@@ -84,8 +84,7 @@ mod tests {
 
         let safe_report_count = reports.iter().filter(|report| is_safe(report.to_vec())).count();
         println!("Count {}", safe_report_count);
-        // incorrect values
-        // 490
+        assert_eq!(472, safe_report_count);
     }
 
 }
