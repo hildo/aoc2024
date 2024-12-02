@@ -22,6 +22,9 @@ fn is_safe(report: Vec<u32>) -> bool {
     let mut pos = 1;
     while report[0] == report[pos] {
         pos += 1;
+        if pos == report.len() {
+            return false;
+        }
     }
 
     let is_ascending = report[0] < report[pos];
@@ -85,6 +88,31 @@ mod tests {
         let safe_report_count = reports.iter().filter(|report| is_safe(report.to_vec())).count();
         println!("Count {}", safe_report_count);
         assert_eq!(472, safe_report_count);
+    }
+
+    #[test]
+    fn test_sum_part_two() {
+        let reports = load_reports("./src/resources/day02_input.txt");
+
+        let mut safe_reports: Vec<_> = reports.iter().filter(|report| is_safe(report.to_vec())).collect();
+        let unsafe_reports: Vec<_> = reports.iter().filter(|report| !is_safe(report.to_vec())).collect();
+
+        for unsafe_report in unsafe_reports {
+            let mut idx = 0;
+            while idx < unsafe_report.len() {
+                let mut tweaked_report = unsafe_report.clone();
+                tweaked_report.remove(idx);
+                if is_safe(tweaked_report) {
+                    safe_reports.push(unsafe_report);
+                    break;
+                }
+                idx += 1;
+            }
+        }
+
+        let safe_report_count = safe_reports.len();
+        println!("{}", safe_report_count);
+        assert_eq!(520, safe_report_count);
     }
 
 }
