@@ -1,29 +1,32 @@
-fn blink_transform(input: &u128) -> Vec<u128> {
-    if *input == 0 {
-        return vec![1];
+use std::collections::HashMap;
+
+fn blink_transform_map(input: &HashMap<u64, usize>) -> HashMap<u64, usize> {
+    let mut return_value = HashMap::with_capacity(input.len());
+
+    for (&key, &count) in input {
+        match key {
+            0 => *return_value.entry(1).or_default() += count,
+            _ => {
+                let digits = key.ilog10() + 1;
+                if digits % 2 == 0 {
+                    *return_value.entry(key % 10u64.pow(digits / 2)).or_default() += count;
+                    *return_value.entry(key / 10u64.pow(digits / 2)).or_default() += count;
+                } else {
+                    *return_value.entry(key * 2024).or_default() += count;
+                }
+            }
+        }
     }
-    static TEN:u128 = 10;
 
-    let digit_count= input.checked_ilog10().unwrap_or(0) + 1;
-    let modulo = digit_count % 2;
-    if modulo == 0 {
-        let indice = digit_count / 2;
-        let divisor = TEN.pow(indice as u32 );
-
-        let left_num = input / divisor;
-        let right_num = input - (left_num * divisor);
-
-        return vec![left_num, right_num];
-   } else {
-        return vec![input * 2024];
-   }
+    return_value
 }
 
-fn blink(input: Vec<u128>) -> Vec<u128> {
-    input.iter()
-        .flat_map(|value| blink_transform(value))
-        .collect()
-        
+fn load_value_map(input: Vec<u64>) -> HashMap<u64, usize> {
+    let mut return_value = HashMap::with_capacity(input.len());
+    for value in input {
+        return_value.insert(value,1);
+    }
+    return_value
 }
 
 #[cfg(test)]
@@ -31,56 +34,43 @@ mod tests {
     use super::*;
 
     #[test]
-    fn check_sample() {
-        let blinked = blink(vec![0, 1, 10, 99, 999]);
-        assert_eq!(blink(vec![0, 1, 10, 99, 999]), vec![1, 2024, 1, 0, 9, 9, 2021976]);
-    }
-
-    #[test]
     fn check_sample_6_blinks() {
-        let mut stones = vec![125, 17];
+        let mut stones = load_value_map(vec![125, 17]);
         for x in 0..6 {
-            stones = blink(stones);
+            stones = blink_transform_map(&stones);
         }
-        assert_eq!(stones.len(), 22);
-        assert_eq!(stones, vec![2097446912, 14168, 4048, 2, 0, 2, 4, 40, 48, 2024, 40, 48, 80, 96, 2, 8, 6, 7, 6, 0, 3, 2]);
+        let total_stones: usize = stones.values().sum();
+        assert_eq!(total_stones, 22);
     }
 
     #[test]
     fn check_sample_25_blinks() {
-        let mut stones = vec![125, 17];
+        let mut stones = load_value_map(vec![125, 17]);
         for x in 0..25 {
-            stones = blink(stones);
+            stones = blink_transform_map(&stones);
         }
-        assert_eq!(stones.len(), 55312);
+        let total_stones: usize = stones.values().sum();
+        assert_eq!(total_stones, 55312);
     }
 
     #[test]
     fn check_part_one_25_blinks() {
-        let mut stones = vec![7725, 185, 2, 132869, 0, 1840437, 62, 26310];
+        let mut stones = load_value_map(vec![7725, 185, 2, 132869, 0, 1840437, 62, 26310]);
         for x in 0..25 {
-            stones = blink(stones);
+            stones = blink_transform_map(&stones);
         }
-        assert_eq!(stones.len(), 233050);
+        let total_stones: usize = stones.values().sum();
+        assert_eq!(total_stones, 233050);
     }
 
     #[test]
     fn check_part_two_75_blinks() {
-        let mut stones = vec![7725, 185, 2, 132869, 0, 1840437, 62, 26310];
+        let mut stones = load_value_map(vec![7725, 185, 2, 132869, 0, 1840437, 62, 26310]);
         for x in 0..75 {
-            stones = blink(stones);
+            stones = blink_transform_map(&stones);
         }
-        println!("{}", stones.len());
-        // assert_eq!(stones.len(), 233050);
+        let total_stones: usize = stones.values().sum();
+        assert_eq!(total_stones, 276661131175807);
     }
 
-    #[test]
-    fn test_blink_tranform() {
-        assert_eq!(blink_transform(&0), vec![1]);
-        assert_eq!(blink_transform(&1), vec![2024]);
-        assert_eq!(blink_transform(&10), vec![1, 0]);
-        assert_eq!(blink_transform(&1000), vec![10, 0]);
-        assert_eq!(blink_transform(&99), vec![9, 9]);
-        assert_eq!(blink_transform(&999), vec![2021976]);
-    }
 }
