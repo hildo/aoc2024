@@ -1,5 +1,3 @@
-use std::arch::x86_64::_CMP_NGE_UQ;
-
 use crate::helpers;
 
 fn load_chars(file_name: &str) -> Vec<String> {
@@ -34,8 +32,6 @@ fn test_backward(input: &Vec<String>, coord: (usize, usize)) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::helpers;
-
     use super::*;
 
     #[test]

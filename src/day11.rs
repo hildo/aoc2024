@@ -2,23 +2,16 @@ fn blink_transform(input: &u128) -> Vec<u128> {
     if *input == 0 {
         return vec![1];
     }
-    let digits: Vec<_> = input.to_string().chars().map(|d| d.to_digit(10).unwrap()).collect();
-    let modulo = digits.len() % 2;
-    if modulo == 0 {
-        // Even number of digits.  Split down the middle and form two number
-        let idx = digits.len() / 2;
-        let (left, right) = digits.split_at(idx);
-        let mut str_value = String::new();
-        for digit in left.iter().map(|d| d.to_string())  {
-            str_value.push_str(&digit);
-        }
-        let left_num: u128 = str_value.parse().unwrap();
+    static TEN:u128 = 10;
 
-        str_value = String::new();
-        for digit in right.iter().map(|d| d.to_string())  {
-            str_value.push_str(&digit);
-        }
-        let right_num: u128 = str_value.parse().unwrap();
+    let digit_count= input.checked_ilog10().unwrap_or(0) + 1;
+    let modulo = digit_count % 2;
+    if modulo == 0 {
+        let indice = digit_count / 2;
+        let divisor = TEN.pow(indice as u32 );
+
+        let left_num = input / divisor;
+        let right_num = input - (left_num * divisor);
 
         return vec![left_num, right_num];
    } else {
@@ -35,8 +28,6 @@ fn blink(input: Vec<u128>) -> Vec<u128> {
 
 #[cfg(test)]
 mod tests {
-    use crate::helpers;
-
     use super::*;
 
     #[test]
@@ -73,15 +64,15 @@ mod tests {
         assert_eq!(stones.len(), 233050);
     }
 
-    // #[test]
-    // fn check_part_two_75_blinks() {
-    //     let mut stones = vec![7725, 185, 2, 132869, 0, 1840437, 62, 26310];
-    //     for x in 0..75 {
-    //         stones = blink(stones);
-    //     }
-    //     println!("{}", stones.len());
-    //     // assert_eq!(stones.len(), 233050);
-    // }
+    #[test]
+    fn check_part_two_75_blinks() {
+        let mut stones = vec![7725, 185, 2, 132869, 0, 1840437, 62, 26310];
+        for x in 0..75 {
+            stones = blink(stones);
+        }
+        println!("{}", stones.len());
+        // assert_eq!(stones.len(), 233050);
+    }
 
     #[test]
     fn test_blink_tranform() {
