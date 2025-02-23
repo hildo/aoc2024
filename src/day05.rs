@@ -39,7 +39,7 @@ fn load_input(input_file_name: &str) -> (Vec<PageRule>, Vec<Vec<u32>>) {
 }
 
 fn are_pages_ordered(pages: &Vec<u32>, rules: &Vec<PageRule>) -> bool {
-    rules.iter().map(|rule| test_pages(&pages, &rule)).all(|rule_matched| rule_matched == true)
+    rules.iter().map(|rule| test_pages(&pages, &rule)).all(|rule_matched| rule_matched)
 }
 
 fn test_pages(pages: &Vec<u32>, rule: &PageRule) -> bool {
