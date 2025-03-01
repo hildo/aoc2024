@@ -91,28 +91,26 @@ impl Map {
 
     fn count_distinct_positions(&mut self) -> usize {
         // println!("Starting at ({},{}) {:?}", self.current_pose.x, self.current_pose.y, self.current_pose.heading);
-        // let mut return_value = 1;
         let mut visited_cells: Vec<Pose> = Vec::new();
 
         while self.current_posiion_on_map() {
+            let mut replace_current = true;
             let next_position = self.current_pose.next_candidate();
             if self.position_on_map(&next_position) {
                 // The target is still on the map.  Check to see if there is an obstruction
-
                 match self.rows[next_position.x].chars().nth(next_position.y).unwrap() {
                     '#' => {
                         // There is an obstruction.  Move ninety degrees
                         self.current_pose.turn_ninety_degrees();
+                        replace_current = false;
                         // println!("Turning right at ({},{}) to {:?}", self.current_pose.x, self.current_pose.y, self.current_pose.heading);
                     },
                     _ => {
                         // No obstruction, moce into the next cell
-                        visited_cells.push(self.current_pose);
-                        self.current_pose = next_position;
                     }
                 }
-            } else {
-                // not on the map.  Still move the position and count
+            }
+            if replace_current {
                 visited_cells.push(self.current_pose);
                 self.current_pose = next_position;
             }
