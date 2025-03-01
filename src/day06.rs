@@ -81,8 +81,8 @@ struct Map {
 impl Map {
 
     fn position_on_map(&self, pose: &Pose) -> bool {
-        pose.x >=0 && pose.x < self.rows.len()
-            && pose.y >= 0 && pose.y < self.rows[self.current_pose.x].len()
+        pose.x < self.rows.len()
+            && pose.y < self.rows[self.current_pose.x].len()
     }
 
     fn current_posiion_on_map(&self) -> bool {
@@ -142,7 +142,7 @@ fn locate_pos_and_heading(lines: &Vec<String>) -> Pose {
 
 
 fn load_map(file_name: &str) -> Map {
-    let lines = load_input("./src/resources/day06_simple.txt");
+    let lines = load_input(file_name);
     let starting_position = locate_pos_and_heading(&lines);
     Map {
         rows: lines,
@@ -158,6 +158,12 @@ mod tests {
     fn test_simple() {
         let mut map = load_map("./src/resources/day06_simple.txt");
         assert_eq!(41, map.count_distinct_positions());
+    }
+
+    #[test]
+    fn test_part_one() {
+        let mut map = load_map("./src/resources/day06_input.txt");
+        assert_eq!(5162, map.count_distinct_positions());
     }
 
     #[test]
