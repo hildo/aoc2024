@@ -23,8 +23,8 @@ enum Heading {
 #[derive(Copy)]
 #[derive(Clone)]
 struct Pose {
-    x: usize,
-    y: usize,
+    x: isize,
+    y: isize,
     heading: Heading
 }
 
@@ -81,8 +81,12 @@ struct Map {
 impl Map {
 
     fn position_on_map(&self, pose: &Pose) -> bool {
-        pose.x < self.rows.len()
-            && pose.y < self.rows[self.current_pose.x].len()
+        if pose.x < 0 || pose.y < 0 {
+            return false;
+        }
+
+        pose.x < self.rows.len() as isize
+            && pose.y < self.rows[self.current_pose.x as usize].len() as isize
     }
 
     fn current_posiion_on_map(&self) -> bool {
@@ -98,7 +102,7 @@ impl Map {
             let next_position = self.current_pose.next_candidate();
             if self.position_on_map(&next_position) {
                 // The target is still on the map.  Check to see if there is an obstruction
-                match self.rows[next_position.x].chars().nth(next_position.y).unwrap() {
+                match self.rows[next_position.x as usize].chars().nth(next_position.y as usize).unwrap() {
                     '#' => {
                         // There is an obstruction.  Move ninety degrees
                         self.current_pose.turn_ninety_degrees();
@@ -137,7 +141,7 @@ fn locate_pos_and_heading(lines: &Vec<String>) -> Pose {
         }
     }
 
-    Pose{x: row, y: col, heading: Heading::Up}
+    Pose{x: row as isize, y: col as isize, heading: Heading::Up}
 }
 
 
