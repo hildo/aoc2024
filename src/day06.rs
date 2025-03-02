@@ -89,15 +89,13 @@ impl Map {
             && pose.y < self.rows[self.current_pose.x as usize].len() as isize
     }
 
-    fn current_posiion_on_map(&self) -> bool {
+    fn current_position_on_map(&self) -> bool {
         self.position_on_map(&self.current_pose)
     }
 
-    fn count_distinct_positions(&mut self) -> usize {
-        // println!("Starting at ({},{}) {:?}", self.current_pose.x, self.current_pose.y, self.current_pose.heading);
-        let mut visited_cells: Vec<Pose> = Vec::new();
-
-        while self.current_posiion_on_map() {
+    fn do_navigate<F: FnMut(Pose, Pose), G: FnMut(Pose), H: FnMut(Pose, Pose)>(&mut self, mut replace_fn: F, mut obstruct_fn: G, mut navigate_fn: H) {
+        let original_pose = self.current_pose;
+        while self.current_position_on_map() {
             let mut replace_current = true;
             let next_position = self.current_pose.next_candidate();
             if self.position_on_map(&next_position) {
@@ -107,19 +105,113 @@ impl Map {
                         // There is an obstruction.  Move ninety degrees
                         self.current_pose.turn_ninety_degrees();
                         replace_current = false;
-                        // println!("Turning right at ({},{}) to {:?}", self.current_pose.x, self.current_pose.y, self.current_pose.heading);
+                        obstruct_fn(next_position);
                     },
                     _ => {
-                        // No obstruction, moce into the next cell
+                        // No obstruction, move into the next cell
+                        navigate_fn(self.current_pose, next_position)
                     }
                 }
             }
             if replace_current {
-                visited_cells.push(self.current_pose);
+                replace_fn(self.current_pose, next_position);
                 self.current_pose = next_position;
             }
         }
+        self.current_pose = original_pose;
+    }
+
+    fn count_distinct_positions(&mut self) -> usize {
+        let mut visited_cells: Vec<Pose> = Vec::new();
+        self.do_navigate(
+            |current, next| visited_cells.push(current),
+            |obstruction| {},
+            |current, next| {}
+        );
         visited_cells.into_iter().collect::<HashSet<Pose>>().into_iter().len()
+    }
+
+    fn looping_obstacle_candidates(&mut self) -> usize {
+        let mut encountered_obstructions: Vec<Pose> = Vec::new();
+        // Navigate the path, finding obstructions
+        self.do_navigate(
+            |current, next| {},
+            |obstruction| encountered_obstructions.push(obstruction),
+            |current, next| {}
+        );
+        // Now that we have obstructions, find obstruction candidates that would cause a loop
+        let mut looping_obstruction_candidates: Vec<(Pose, Pose)> = Vec::new();
+        self.do_navigate(
+            |current, next| {},
+            |obstruction| {},
+            |current, next| {
+                match current.heading {
+                    Heading::Up => {
+                        // Look to the right.  See if we have encountered any obstructions already
+                        match encountered_obstructions.iter().find(|obs| obs.x == current.x && obs.y > current.y) {
+                            Some(p) => looping_obstruction_candidates.push((current, next)),
+                            _ => { 
+                                // nothing 
+                            }
+                        };
+                    },
+                    Heading::Down => {
+                        // Look to the right.  See if we have encountered any obstructions already
+                        match encountered_obstructions.iter().find(|obs| obs.x == current.x && obs.y < current.y) {
+                            Some(p) => looping_obstruction_candidates.push((current, next)),
+                            _ => { 
+                                // nothing 
+                            }
+                        };
+                    },
+                    Heading::Left => {
+                        match encountered_obstructions.iter().find(|obs| obs.x < current.x && obs.y == current.y) {
+                            Some(p) => looping_obstruction_candidates.push((current, next)),
+                            _ => { 
+                                // nothing 
+                            }
+                        };
+                    },
+                    Heading::Right => {
+                        match encountered_obstructions.iter().find(|obs| obs.x > current.x && obs.y == current.y) {
+                            Some(p) => looping_obstruction_candidates.push((current, next)),
+                            _ => { 
+                                // nothing 
+                            }
+                        };
+                    },
+                }
+            }
+        );
+
+        let mut new_obstructions: Vec<Pose> = Vec::new();
+
+        // for each candidate, update the map with the new obstacle and see if a loop occurs
+        for candidate_pair in looping_obstruction_candidates {
+            let mut new_rows = self.rows.clone();
+            let mut row_to_change = new_rows[candidate_pair.1.x as usize].clone();
+            row_to_change.replace_range(candidate_pair.1.y as usize..candidate_pair.1.y as usize +1, "#");
+
+            let mut new_map = Map {rows: new_rows, current_pose: self.current_pose };
+            let mut in_a_loop = false;
+            
+            let mut counter = 0;
+            new_map.do_navigate(
+                |_, _| {},
+                |_| {},
+                |current, next| {
+                    // listen for whether the path naviates through the point twice
+                    if current == candidate_pair.0 {
+                        counter += 1;
+                    }
+                });
+
+            if counter > 1 {
+                new_obstructions.push(candidate_pair.1);
+            }
+        }
+        
+        new_obstructions.into_iter().collect::<HashSet<Pose>>().into_iter().len()
     }
 
 }
@@ -177,4 +269,20 @@ mod tests {
         assert!(!my_pose.same_location(&next_pose));
         assert_eq!(0, next_pose.x);
     }
+
+    #[test]
+    fn test_part_two_simple() {
+        let mut map = load_map("./src/resources/day06_simple.txt");
+        assert_eq!(6, map.looping_obstacle_candidates());
+        // let candidates = map.looping_obstacle_candidates();
+    }
+
+    // #[test]
+    // fn test_part_two() {
+    //     let mut map = load_map("./src/resources/day06_input.txt");
+    //     println!("{}", map.count_looping_obstacles());
+    //     // 2092 fails ... too high
+    //     // assert_eq!(6, map.count_looping_obstacles());
+    // }
+
 }
